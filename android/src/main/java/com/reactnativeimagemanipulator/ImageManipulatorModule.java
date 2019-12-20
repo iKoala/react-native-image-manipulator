@@ -1,9 +1,11 @@
 package com.reactnativeimagemanipulator;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.util.Base64;
+import android.util.Log;
 
 import com.facebook.common.executors.CallerThreadExecutor;
 import com.facebook.common.executors.UiThreadImmediateExecutorService;
@@ -31,8 +33,12 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class ImageManipulatorModule extends ReactContextBaseJavaModule {
+  private static final String TAG = "ImageManipulatorModule";
+
   private static final String DECODE_ERROR_TAG = "E_DECODE_ERR";
   private static final String ARGS_ERROR_TAG = "E_ARGS_ERR";
+
+  private static final int COLOR_TOLERANCE = 40;
 
   public ImageManipulatorModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -138,6 +144,29 @@ public class ImageManipulatorModule extends ReactContextBaseJavaModule {
           return;
         }
         bmp = Bitmap.createBitmap(bmp, originX, originY, requestedWidth, requestedHeight);
+      } else if (options.hasKey("cutout")) {
+        ReadableMap cutout = options.getMap("cutout");
+        int tolerance = COLOR_TOLERANCE;
+        int alpha = 0;
+        int red = 0;
+        int green = 0;
+        int blue = 0;
+        if (cutout.hasKey("tolerance")) {
+          tolerance = cutout.getInt("tolerance");
+        }
+        if (cutout.hasKey("alpha")) {
+          alpha = cutout.getInt("alpha");
+        }
+        if (cutout.hasKey("red")) {
+          red = cutout.getInt("red");
+        }
+        if (cutout.hasKey("green")) {
+          green = cutout.getInt("green");
+        }
+        if (cutout.hasKey("blue")) {
+          blue = cutout.getInt("blue");
+        }
+        bmp = this.removeBackgroundColor(bmp, tolerance, alpha, red, green, blue);
       }
     }
 
@@ -203,6 +232,83 @@ public class ImageManipulatorModule extends ReactContextBaseJavaModule {
     if (base64) {
       response.putString("base64", base64String);
     }
+    response.putString("bg", "removed");
     promise.resolve(response);
+  }
+
+  protected Bitmap removeBackgroundColor(Bitmap oldBitmap, int tolerance, int alpha, int red, int green, int blue) {
+    Log.d(TAG, "removeBackgroundColor()");
+    Log.d(TAG, "tolerance >> " + tolerance);
+    Log.d(TAG, "alpha >> " + alpha);
+    Log.d(TAG, "red >> " + red);
+    Log.d(TAG, "green >> " + green);
+    Log.d(TAG, "blue >> " + blue);
+    // Bitmap oldBitmap = drawViewWeakReference.get().imageBitmap;
+
+    // String hexColor = "00ffffff";
+    // int A = 255;
+    // int R = 255;
+    // int G = 255;
+    // int B = 255;
+
+    // int colorToReplace = oldBitmap.getPixel(points[0], points[1]);
+    // int colorToReplace = Integer.parseInt(hexColor, 16);
+    // int colorToReplace = (A & 0xff) << 24 | (R & 0xff) << 16 | (G & 0xff) << 8 | (B & 0xff);
+
+    int width = oldBitmap.getWidth();
+    int height = oldBitmap.getHeight();
+    int[] pixels = new int[width * height];
+    oldBitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+
+    // int rA = Color.alpha(colorToReplace);
+    // int rR = Color.red(colorToReplace);
+    // int rG = Color.green(colorToReplace);
+    // int rB = Color.blue(colorToReplace);
+    int rA = alpha;
+    int rR = red;
+    int rG = green;
+    int rB = blue;
+
+    // Log.d(TAG, "rA >> " + rA);
+    // Log.d(TAG, "rR >> " + rR);
+    // Log.d(TAG, "rG >> " + rG);
+    // Log.d(TAG, "rB >> " + rB);
+
+    int pixel;
+
+    // iteration through pixels
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            // get current index in 2D-matrix
+            int index = y * width + x;
+            pixel = pixels[index];
+            int rrA = Color.alpha(pixel);
+            int rrR = Color.red(pixel);
+            int rrG = Color.green(pixel);
+            int rrB = Color.blue(pixel);
+            
+            // Include Alpha color value
+            // if (rA - COLOR_TOLERANCE < rrA && rrA < rA + COLOR_TOLERANCE && rR - COLOR_TOLERANCE < rrR && rrR < rR + COLOR_TOLERANCE &&
+            //         rG - COLOR_TOLERANCE < rrG && rrG < rG + COLOR_TOLERANCE && rB - COLOR_TOLERANCE < rrB && rrB < rB + COLOR_TOLERANCE) {
+            //     pixels[index] = Color.TRANSPARENT;
+            // }
+
+            // Ignore Alpha color value
+            if (rR - tolerance < rrR && rrR < rR + tolerance
+                && rG - tolerance < rrG && rrG < rG + tolerance
+                && rB - tolerance < rrB && rrB < rB + tolerance) {
+                pixels[index] = Color.TRANSPARENT;
+            }
+
+            // if (y <= height / 10) {
+            //   pixels[index] = Color.TRANSPARENT;
+            // }
+        }
+    }
+
+    Bitmap newBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    newBitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+
+    return newBitmap;
   }
 }
