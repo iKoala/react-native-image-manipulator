@@ -1,7 +1,7 @@
 {
   "name": "@iKoala/react-native-image-manipulator",
   "author": "Pontus Abrahamsson",
-  "version": "1.0.6",
+  "version": "1.1.2",
   "description": "An API to modify images stored in app scope.",
   "homepage": "https://github.com/iKoala/react-native-image-manipulator",
   "main": "build/ImageManipulator.js",
