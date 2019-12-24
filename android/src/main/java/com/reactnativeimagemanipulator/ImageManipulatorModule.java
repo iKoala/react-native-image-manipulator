@@ -146,13 +146,23 @@ public class ImageManipulatorModule extends ReactContextBaseJavaModule {
         bmp = Bitmap.createBitmap(bmp, originX, originY, requestedWidth, requestedHeight);
       } else if (options.hasKey("cutout")) {
         ReadableMap cutout = options.getMap("cutout");
-        int tolerance = COLOR_TOLERANCE;
+        // int tolerance = COLOR_TOLERANCE;
+        int toleranceAlpha = COLOR_TOLERANCE;
+        int toleranceRed = COLOR_TOLERANCE;
+        int toleranceGreen = COLOR_TOLERANCE;
+        int toleranceBlue = COLOR_TOLERANCE;
         int alpha = 0;
         int red = 0;
         int green = 0;
         int blue = 0;
-        if (cutout.hasKey("tolerance")) {
-          tolerance = cutout.getInt("tolerance");
+        if (cutout.hasKey("tolarenceRed")) {
+          toleranceRed = cutout.getInt("tolarenceRed");
+        }
+        if (cutout.hasKey("tolarenceGreen")) {
+          toleranceGreen = cutout.getInt("tolarenceGreen");
+        }
+        if (cutout.hasKey("tolarenceBlue")) {
+          toleranceBlue = cutout.getInt("tolarenceBlue");
         }
         if (cutout.hasKey("alpha")) {
           alpha = cutout.getInt("alpha");
@@ -166,7 +176,7 @@ public class ImageManipulatorModule extends ReactContextBaseJavaModule {
         if (cutout.hasKey("blue")) {
           blue = cutout.getInt("blue");
         }
-        bmp = this.removeBackgroundColor(bmp, tolerance, alpha, red, green, blue);
+        bmp = this.removeBackgroundColor(bmp, alpha, red, green, blue, toleranceAlpha, toleranceRed, toleranceGreen, toleranceBlue);
       }
     }
 
@@ -236,9 +246,12 @@ public class ImageManipulatorModule extends ReactContextBaseJavaModule {
     promise.resolve(response);
   }
 
-  protected Bitmap removeBackgroundColor(Bitmap oldBitmap, int tolerance, int alpha, int red, int green, int blue) {
+  protected Bitmap removeBackgroundColor(Bitmap oldBitmap, int alpha, int red, int green, int blue, int toleranceAlpha, int toleranceRed, int toleranceGreen, int toleranceBlue) {
     Log.d(TAG, "removeBackgroundColor()");
-    Log.d(TAG, "tolerance >> " + tolerance);
+    Log.d(TAG, "toleranceAlpha >> " + toleranceAlpha);
+    Log.d(TAG, "toleranceRed >> " + toleranceRed);
+    Log.d(TAG, "toleranceGreen >> " + toleranceGreen);
+    Log.d(TAG, "toleranceBlue >> " + toleranceBlue);
     Log.d(TAG, "alpha >> " + alpha);
     Log.d(TAG, "red >> " + red);
     Log.d(TAG, "green >> " + green);
@@ -294,9 +307,9 @@ public class ImageManipulatorModule extends ReactContextBaseJavaModule {
             // }
 
             // Ignore Alpha color value
-            if (rR - tolerance < rrR && rrR < rR + tolerance
-                && rG - tolerance < rrG && rrG < rG + tolerance
-                && rB - tolerance < rrB && rrB < rB + tolerance) {
+            if (rR - toleranceRed < rrR && rrR < rR + toleranceRed
+                && rG - toleranceGreen < rrG && rrG < rG + toleranceGreen
+                && rB - toleranceBlue < rrB && rrB < rB + toleranceBlue) {
                 pixels[index] = Color.TRANSPARENT;
             }
 
