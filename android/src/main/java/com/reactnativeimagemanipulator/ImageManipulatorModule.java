@@ -307,12 +307,39 @@ public class ImageManipulatorModule extends ReactContextBaseJavaModule {
             // }
 
             // Ignore Alpha color value
-            if (rR - toleranceRed < rrR && rrR < rR + toleranceRed
-                && rG - toleranceGreen < rrG && rrG < rG + toleranceGreen
-                && rB - toleranceBlue < rrB && rrB < rB + toleranceBlue) {
+            // if (rR - toleranceRed < rrR && rrR < rR + toleranceRed
+            //     && rG - toleranceGreen < rrG && rrG < rG + toleranceGreen
+            //     && rB - toleranceBlue < rrB && rrB < rB + toleranceBlue) {
+            //     pixels[index] = Color.TRANSPARENT;
+            // }
+
+            // if the color at the current pixel is mostly green
+            // * (green value is greater than blue and red combined), 
+            //  * then use the new background color
+            int combindedColor = 0;
+            // Green Background
+            if (rG >= rR && rG >= rB) {
+              combindedColor = (rrR + rrB) + 50 - toleranceGreen;
+              if (rrG >= 80 && combindedColor / 2 < rrG) {
                 pixels[index] = Color.TRANSPARENT;
+              }
+            }
+            // Blue Background
+            if (rB >= rR && rB >= rG) {
+              combindedColor = rrR + rrG + 50 - toleranceBlue;
+              if (rrB >= 80 && combindedColor / 2 < rrB) {
+                pixels[index] = Color.TRANSPARENT;
+              }
+            }
+            // Red Background
+            if (rR >= rG && rR >= rB) {
+              combindedColor = rrG + rrB + 50 - toleranceRed;
+              if (rrR >= 80 && combindedColor / 2 < rrR) {
+                pixels[index] = Color.TRANSPARENT;
+              }
             }
 
+            // Debug Test
             // if (y <= height / 10) {
             //   pixels[index] = Color.TRANSPARENT;
             // }
